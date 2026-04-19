@@ -14,11 +14,11 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 )
 
-// wickrSupportedRegions returns the Wickr_Supported_Regions set from the
+// supportedRegions returns the Wickr_Supported_Regions set from the
 // Glossary in the spec (see .kiro/specs/aws-wickr-service/requirements.md).
 // Wickr is available in 11 commercial regions plus GovCloud us-gov-west-1;
 // the provider's default test region (us-west-2) is NOT in this set.
-func wickrSupportedRegions() []string {
+func supportedRegions() []string {
 	return []string{
 		endpoints.UsEast1RegionID,
 		endpoints.ApNortheast1RegionID,
@@ -38,19 +38,20 @@ func wickrSupportedRegions() []string {
 // testAccPreCheck is the shared PreCheck aggregator invoked by every Wickr
 // acceptance test. It combines the provider-level PreCheck, the
 // Wickr-region gate, and a live-API reachability probe (see
-// testAccPreCheckWickrAvailable below).
+// testAccPreCheckAvailable below).
 func testAccPreCheck(ctx context.Context, t *testing.T) {
 	acctest.PreCheck(ctx, t)
-	acctest.PreCheckRegion(t, wickrSupportedRegions()...)
-	testAccPreCheckWickrAvailable(ctx, t)
+	acctest.PreCheckRegion(t, supportedRegions()...)
+	testAccPreCheckAvailable(ctx, t)
 }
 
-// testAccPreCheckWickrAvailable probes ListNetworks once and skips (not
+// testAccPreCheckAvailable probes ListNetworks once and skips (not
 // fails) when the caller's principal lacks Wickr permissions.
-func testAccPreCheckWickrAvailable(ctx context.Context, t *testing.T) {
+func testAccPreCheckAvailable(ctx context.Context, t *testing.T) {
 	conn := acctest.ProviderMeta(ctx, t).WickrClient(ctx)
 
-	_, err := conn.ListNetworks(ctx, &wickr.ListNetworksInput{})
+	input := wickr.ListNetworksInput{}
+	_, err := conn.ListNetworks(ctx, &input)
 
 	// Implementation note for open question #5 (UnauthorizedError vs
 	// ForbiddenError on a no-perms principal):

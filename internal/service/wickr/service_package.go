@@ -16,16 +16,16 @@ import (
 
 // withExtraOptions installs the Wickr JSON-shim BeforeDeserialization
 // interceptor on every Wickr client constructed by this service package. See
-// [wickrNetworkIDInterceptor] for the motivating bug (aws/aws-sdk-go-v2#3391).
+// [networkIDInterceptor] for the motivating bug (aws/aws-sdk-go-v2#3391).
 func (p *servicePackage) withExtraOptions(_ context.Context, _ map[string]any) []func(*wickr.Options) {
 	return []func(*wickr.Options){
 		func(o *wickr.Options) {
-			o.Interceptors.AddBeforeDeserialization(wickrNetworkIDInterceptor{})
+			o.Interceptors.AddBeforeDeserialization(networkIDInterceptor{})
 		},
 	}
 }
 
-// wickrNumericStringRE matches `"<key>":<digits>` where <key> is one of the
+// numericStringRE matches `"<key>":<digits>` where <key> is one of the
 // Wickr response fields that the public API Reference declares as String but
 // the live service sends as a JSON number. The regex is intentionally narrow:
 // it requires the key to be quoted and immediately followed by `":` (JSON
@@ -36,9 +36,9 @@ func (p *servicePackage) withExtraOptions(_ context.Context, _ map[string]any) [
 //
 // Fields currently covered: `networkId`. Add others here ONLY when backed by
 // an observed wire response from a live Wickr operation — do not guess.
-var wickrNumericStringRE = regexache.MustCompile(`"(networkId)":(\d+)`)
+var numericStringRE = regexache.MustCompile(`"(networkId)":(\d+)`)
 
-// wickrNetworkIDInterceptor is a BeforeDeserialization interceptor that
+// networkIDInterceptor is a BeforeDeserialization interceptor that
 // rewrites bare numeric `networkId` values in the HTTP response body to
 // quoted strings before the SDK's generated JSON decoder runs. This is a
 // targeted workaround for aws/aws-sdk-go-v2#3391: the live AWS Wickr admin
@@ -53,14 +53,14 @@ var wickrNumericStringRE = regexache.MustCompile(`"(networkId)":(\d+)`)
 //
 // Remove this interceptor (and the enclosing withExtraOptions hook) once
 // the upstream service or SDK fix lands.
-type wickrNetworkIDInterceptor struct{}
+type networkIDInterceptor struct{}
 
 // BeforeDeserialization implements smithyhttp.InterceptBeforeDeserialization.
 // It consumes the current response body, rewrites any bare `"networkId":<N>`
 // occurrences to `"networkId":"<N>"`, and replaces the body with the fixed
 // bytes so the SDK's generated deserializer sees a schema-conforming
 // response.
-func (wickrNetworkIDInterceptor) BeforeDeserialization(_ context.Context, in *smithyhttp.InterceptorContext) error {
+func (networkIDInterceptor) BeforeDeserialization(_ context.Context, in *smithyhttp.InterceptorContext) error {
 	if in == nil || in.Response == nil || in.Response.Body == nil {
 		return nil
 	}
@@ -71,7 +71,7 @@ func (wickrNetworkIDInterceptor) BeforeDeserialization(_ context.Context, in *sm
 		return fmt.Errorf("reading Wickr response body for networkId shim: %w", err)
 	}
 
-	fixed := wickrNumericStringRE.ReplaceAll(body, []byte(`"$1":"$2"`))
+	fixed := numericStringRE.ReplaceAll(body, []byte(`"$1":"$2"`))
 	in.Response.Body = io.NopCloser(bytes.NewReader(fixed))
 
 	return nil

@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/YakDriver/regexache"
 	"github.com/aws/aws-sdk-go-v2/service/wickr"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/wickr/types"
-	sdkacctest "github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
@@ -32,7 +32,7 @@ func TestAccWickrNetwork_basic(t *testing.T) {
 	// network_name is limited to 1-20 chars by the SDK, so use a fixed-length
 	// 20-char random string rather than sdkacctest.RandomWithPrefix (which
 	// yields 26 chars with a short prefix).
-	rName := sdkacctest.RandString(20)
+	rName := acctest.RandString(t, 20)
 	resourceName := "aws_wickr_network.test"
 
 	acctest.ParallelTest(ctx, t, resource.TestCase{
@@ -49,9 +49,9 @@ func TestAccWickrNetwork_basic(t *testing.T) {
 					testAccCheckNetworkExists(ctx, t, resourceName, &network),
 					resource.TestCheckResourceAttr(resourceName, "access_level", "STANDARD"),
 					resource.TestCheckResourceAttr(resourceName, "network_name", rName),
-					resource.TestCheckResourceAttrSet(resourceName, names.AttrARN),
+					acctest.MatchResourceAttrRegionalARN(ctx, resourceName, names.AttrARN, "wickr", regexache.MustCompile(`network/[0-9]{8}$`)),
 					resource.TestCheckResourceAttrSet(resourceName, "network_id"),
-					resource.TestCheckResourceAttrSet(resourceName, "aws_account_id"),
+					resource.TestCheckResourceAttrSet(resourceName, names.AttrAWSAccountID),
 				),
 			},
 			{
@@ -72,7 +72,7 @@ func TestAccWickrNetwork_disappears(t *testing.T) {
 	}
 
 	var network wickr.GetNetworkOutput
-	rName := sdkacctest.RandString(20)
+	rName := acctest.RandString(t, 20)
 	resourceName := "aws_wickr_network.test"
 
 	acctest.ParallelTest(ctx, t, resource.TestCase{
@@ -105,8 +105,8 @@ func TestAccWickrNetwork_networkName(t *testing.T) {
 	}
 
 	var network wickr.GetNetworkOutput
-	rName1 := sdkacctest.RandString(20)
-	rName2 := sdkacctest.RandString(20)
+	rName1 := acctest.RandString(t, 20)
+	rName2 := acctest.RandString(t, 20)
 	resourceName := "aws_wickr_network.test"
 
 	acctest.ParallelTest(ctx, t, resource.TestCase{

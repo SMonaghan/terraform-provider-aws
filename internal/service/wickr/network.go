@@ -83,7 +83,7 @@ func (r *networkResource) Schema(ctx context.Context, req resource.SchemaRequest
 				},
 			},
 			names.AttrARN: framework.ARNAttributeComputedOnly(),
-			"aws_account_id": schema.StringAttribute{
+			names.AttrAWSAccountID: schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
