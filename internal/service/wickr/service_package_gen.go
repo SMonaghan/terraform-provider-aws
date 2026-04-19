@@ -27,6 +27,12 @@ func (p *servicePackage) FrameworkDataSources(ctx context.Context) []*inttypes.S
 			Name:     "Network",
 			Region:   inttypes.ResourceRegionDefault(),
 		},
+		{
+			Factory:  newNetworksDataSource,
+			TypeName: "aws_wickr_networks",
+			Name:     "Networks",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
 	}
 }
 
