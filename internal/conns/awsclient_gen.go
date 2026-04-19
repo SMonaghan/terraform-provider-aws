@@ -266,6 +266,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/wafregional"
 	"github.com/aws/aws-sdk-go-v2/service/wafv2"
 	"github.com/aws/aws-sdk-go-v2/service/wellarchitected"
+	"github.com/aws/aws-sdk-go-v2/service/wickr"
 	"github.com/aws/aws-sdk-go-v2/service/workmail"
 	"github.com/aws/aws-sdk-go-v2/service/workspaces"
 	"github.com/aws/aws-sdk-go-v2/service/workspacesweb"
@@ -1308,6 +1309,10 @@ func (c *AWSClient) WAFV2Client(ctx context.Context) *wafv2.Client {
 
 func (c *AWSClient) WellArchitectedClient(ctx context.Context) *wellarchitected.Client {
 	return errs.Must(client[*wellarchitected.Client](ctx, c, names.WellArchitected, make(map[string]any)))
+}
+
+func (c *AWSClient) WickrClient(ctx context.Context) *wickr.Client {
+	return errs.Must(client[*wickr.Client](ctx, c, names.Wickr, make(map[string]any)))
 }
 
 func (c *AWSClient) WorkMailClient(ctx context.Context) *workmail.Client {

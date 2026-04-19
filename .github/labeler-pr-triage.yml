@@ -2413,6 +2413,12 @@ service/wellarchitected:
           - any-glob-to-any-file:
               - 'internal/service/wellarchitected/**/*'
               - 'website/**/wellarchitected_*'
+service/wickr:
+  - any:
+      - changed-files:
+          - any-glob-to-any-file:
+              - 'internal/service/wickr/**/*'
+              - 'website/**/wickr_*'
 service/wisdom:
   - any:
       - changed-files:

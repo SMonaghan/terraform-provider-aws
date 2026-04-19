@@ -2066,6 +2066,13 @@ func endpointsBlock() schema.SetNestedBlock {
 					Description: "Use this to override the default service endpoint URL",
 				},
 
+				// wickr
+
+				"wickr": schema.StringAttribute{
+					Optional:    true,
+					Description: "Use this to override the default service endpoint URL",
+				},
+
 				// workmail
 
 				"workmail": schema.StringAttribute{

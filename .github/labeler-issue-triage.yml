@@ -760,6 +760,8 @@ service/wavelength:
   - '((\*|-)\s*`?|(data|resource)\s+"?)aws_ec2_carrier_gateway'
 service/wellarchitected:
   - '((\*|-)\s*`?|(data|resource)\s+"?)aws_wellarchitected_'
+service/wickr:
+  - '((\*|-)\s*`?|(data|resource)\s+"?)aws_wickr_'
 service/wisdom:
   - '((\*|-)\s*`?|(data|resource)\s+"?)aws_wisdom_'
 service/workdocs:

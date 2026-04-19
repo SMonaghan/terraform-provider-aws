@@ -9112,6 +9112,30 @@ service "wellarchitected" {
   brand                    = "AWS"
 }
 
+service "wickr" {
+  sdk {
+    id            = "Wickr"
+    arn_namespace = "wickr"
+  }
+
+  names {
+    provider_name_upper = "Wickr"
+    human_friendly      = "Wickr"
+  }
+
+  endpoint_info {
+    endpoint_api_call = "ListNetworks"
+  }
+
+  resource_prefix {
+    correct = "aws_wickr_"
+  }
+
+  provider_package_correct = "wickr"
+  doc_prefix               = ["wickr_"]
+  brand                    = "AWS"
+}
+
 service "workdocs" {
   sdk {
     id            = "WorkDocs"

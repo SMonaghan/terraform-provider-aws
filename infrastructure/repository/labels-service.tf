@@ -369,6 +369,7 @@ variable "service_labels" {
     "wafv2",
     "wavelength",
     "wellarchitected",
+    "wickr",
     "wisdom",
     "workdocs",
     "worklink",

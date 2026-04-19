@@ -267,6 +267,7 @@ WAF Classic Regional
 Wavelength
 Web Services Budgets
 Well-Architected Tool
+Wickr
 WorkMail
 WorkSpaces
 WorkSpaces Web
