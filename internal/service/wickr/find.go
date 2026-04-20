@@ -46,3 +46,31 @@ func findNetworkByID(ctx context.Context, conn *wickr.Client, id string) (*wickr
 
 	return out, nil
 }
+
+// findSecurityGroupByID wraps GetSecurityGroup with the provider's standard
+// `*awstypes.ResourceNotFoundError` → `retry.NotFoundError` conversion
+// (design.md → "Error handling — smarterr / `internal/smerr`"). The SDK
+// surfaces the not-found signal as `*awstypes.ResourceNotFoundError` (note
+// the "Error" suffix, not "Exception").
+func findSecurityGroupByID(ctx context.Context, conn *wickr.Client, networkID, groupID string) (*awstypes.SecurityGroup, error) {
+	input := wickr.GetSecurityGroupInput{
+		GroupId:   aws.String(groupID),
+		NetworkId: aws.String(networkID),
+	}
+
+	out, err := conn.GetSecurityGroup(ctx, &input)
+	if errs.IsA[*awstypes.ResourceNotFoundError](err) {
+		return nil, &retry.NotFoundError{
+			LastError: err,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if out == nil || out.SecurityGroup == nil {
+		return nil, tfresource.NewEmptyResultError()
+	}
+
+	return out.SecurityGroup, nil
+}

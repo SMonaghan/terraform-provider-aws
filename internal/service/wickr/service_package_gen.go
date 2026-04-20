@@ -48,6 +48,20 @@ func (p *servicePackage) FrameworkResources(ctx context.Context) []*inttypes.Ser
 				WrappedImport: true,
 			},
 		},
+		{
+			Factory:  newSecurityGroupResource,
+			TypeName: "aws_wickr_security_group",
+			Name:     "Security Group",
+			Region:   inttypes.ResourceRegionDefault(),
+			Identity: inttypes.RegionalParameterizedIdentity([]inttypes.IdentityAttribute{
+				inttypes.StringIdentityAttribute("network_id", true),
+				inttypes.StringIdentityAttribute("security_group_id", true),
+			}),
+			Import: inttypes.FrameworkImport{
+				WrappedImport: true,
+				ImportID:      securityGroupImportID{},
+			},
+		},
 	}
 }
 

@@ -5,7 +5,9 @@ package wickr
 
 // Exports for use in tests only.
 var (
-	ResourceNetwork = newNetworkResource
+	ResourceNetwork       = newNetworkResource
+	ResourceSecurityGroup = newSecurityGroupResource
 
-	FindNetworkByID = findNetworkByID
+	FindNetworkByID       = findNetworkByID
+	FindSecurityGroupByID = findSecurityGroupByID
 )
