@@ -33,6 +33,12 @@ func (p *servicePackage) FrameworkDataSources(ctx context.Context) []*inttypes.S
 			Name:     "Networks",
 			Region:   inttypes.ResourceRegionDefault(),
 		},
+		{
+			Factory:  newSecurityGroupDataSource,
+			TypeName: "aws_wickr_security_group",
+			Name:     "Security Group",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
 	}
 }
 
