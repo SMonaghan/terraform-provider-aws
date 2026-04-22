@@ -22,21 +22,20 @@ import (
 // Only fields the user explicitly configured (non-null, non-unknown) are
 // populated. The API accepts a sparse payload — omitted fields retain
 // their current values server-side.
-func expandNetworkSettings(model networkSettingsResourceModel) *awstypes.NetworkSettings {
+func expandNetworkSettings(ctx context.Context, model networkSettingsModel) *awstypes.NetworkSettings {
 	out := &awstypes.NetworkSettings{}
 	hasAny := false
 
 	if !model.EnableClientMetrics.IsNull() && !model.EnableClientMetrics.IsUnknown() {
-		out.EnableClientMetrics = aws.Bool(model.EnableClientMetrics.ValueBool())
+		out.EnableClientMetrics = model.EnableClientMetrics.ValueBoolPointer()
 		hasAny = true
 	}
 	if !model.EnableTrustedDataFormat.IsNull() && !model.EnableTrustedDataFormat.IsUnknown() {
-		out.EnableTrustedDataFormat = aws.Bool(model.EnableTrustedDataFormat.ValueBool())
+		out.EnableTrustedDataFormat = model.EnableTrustedDataFormat.ValueBoolPointer()
 		hasAny = true
 	}
 
 	if !model.ReadReceiptConfig.IsNull() && !model.ReadReceiptConfig.IsUnknown() {
-		ctx := context.Background()
 		if ptr, d := model.ReadReceiptConfig.ToPtr(ctx); d == nil || !d.HasError() {
 			if ptr != nil && !ptr.Status.IsNull() && !ptr.Status.IsUnknown() {
 				out.ReadReceiptConfig = &awstypes.ReadReceiptConfig{
@@ -68,7 +67,7 @@ func expandNetworkSettings(model networkSettingsResourceModel) *awstypes.Network
 // GetNetworkSettings call in a Wickr-supported region and record the
 // observed values here. As of this writing the answer remains unverified
 // against live AWS.
-func flattenNetworkSettingsOutput(ctx context.Context, out *wickr.GetNetworkSettingsOutput, model *networkSettingsResourceModel) {
+func flattenNetworkSettingsOutput(ctx context.Context, out *wickr.GetNetworkSettingsOutput, model *networkSettingsModel) {
 	if out == nil {
 		return
 	}

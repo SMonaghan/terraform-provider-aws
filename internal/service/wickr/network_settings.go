@@ -130,14 +130,14 @@ func (r *networkSettingsResource) Create(ctx context.Context, req resource.Creat
 
 	// Only call UpdateNetworkSettings if the user configured at least one
 	// setting. An empty settings struct causes BadRequestError.
-	settings := expandNetworkSettings(plan)
+	settings := expandNetworkSettings(ctx, plan.networkSettingsModel)
 	if settings != nil {
-		input := &wickr.UpdateNetworkSettingsInput{
+		input := wickr.UpdateNetworkSettingsInput{
 			NetworkId: aws.String(networkID),
 			Settings:  settings,
 		}
 
-		_, err = conn.UpdateNetworkSettings(ctx, input)
+		_, err = conn.UpdateNetworkSettings(ctx, &input)
 		if err != nil {
 			smerr.AddError(ctx, &resp.Diagnostics, err, smerr.ID, networkID)
 			return
@@ -150,7 +150,7 @@ func (r *networkSettingsResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-	flattenNetworkSettingsOutput(ctx, out, &plan)
+	flattenNetworkSettingsOutput(ctx, out, &plan.networkSettingsModel)
 
 	smerr.AddEnrich(ctx, &resp.Diagnostics, resp.State.Set(ctx, &plan))
 }
@@ -181,7 +181,7 @@ func (r *networkSettingsResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	flattenNetworkSettingsOutput(ctx, out, &state)
+	flattenNetworkSettingsOutput(ctx, out, &state.networkSettingsModel)
 
 	smerr.AddEnrich(ctx, &resp.Diagnostics, resp.State.Set(ctx, &state))
 }
@@ -198,12 +198,12 @@ func (r *networkSettingsResource) Update(ctx context.Context, req resource.Updat
 	networkID := fwflex.StringValueFromFramework(ctx, state.NetworkID)
 
 	// Read current settings to use as base for the full payload.
-	input := &wickr.UpdateNetworkSettingsInput{
+	input := wickr.UpdateNetworkSettingsInput{
 		NetworkId: aws.String(networkID),
-		Settings:  expandNetworkSettings(plan),
+		Settings:  expandNetworkSettings(ctx, plan.networkSettingsModel),
 	}
 
-	_, err := conn.UpdateNetworkSettings(ctx, input)
+	_, err := conn.UpdateNetworkSettings(ctx, &input)
 	if err != nil {
 		smerr.AddError(ctx, &resp.Diagnostics, err, smerr.ID, networkID)
 		return
@@ -215,7 +215,7 @@ func (r *networkSettingsResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	flattenNetworkSettingsOutput(ctx, out, &plan)
+	flattenNetworkSettingsOutput(ctx, out, &plan.networkSettingsModel)
 
 	smerr.AddEnrich(ctx, &resp.Diagnostics, resp.State.Set(ctx, &plan))
 }
@@ -225,13 +225,20 @@ func (r *networkSettingsResource) ImportState(ctx context.Context, req resource.
 }
 
 type networkSettingsResourceModel struct {
+	networkSettingsModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
+}
+
+// networkSettingsModel contains the fields shared between the resource and
+// data source models. flattenNetworkSettingsOutput populates this struct
+// from the flat []types.Setting list returned by GetNetworkSettings.
+type networkSettingsModel struct {
 	framework.WithRegionModel
 	NetworkID               types.String                                            `tfsdk:"network_id"`
 	DataRetention           types.Bool                                              `tfsdk:"data_retention"`
 	EnableClientMetrics     types.Bool                                              `tfsdk:"enable_client_metrics"`
 	EnableTrustedDataFormat types.Bool                                              `tfsdk:"enable_trusted_data_format"`
 	ReadReceiptConfig       fwtypes.ListNestedObjectValueOf[readReceiptConfigModel] `tfsdk:"read_receipt_config"`
-	Timeouts                timeouts.Value                                          `tfsdk:"timeouts"`
 }
 
 type readReceiptConfigModel struct {
