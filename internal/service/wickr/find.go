@@ -47,6 +47,32 @@ func findNetworkByID(ctx context.Context, conn *wickr.Client, id string) (*wickr
 	return out, nil
 }
 
+// findNetworkSettingsByID wraps GetNetworkSettings with the provider's
+// standard `*awstypes.ResourceNotFoundError` → `retry.NotFoundError`
+// conversion. The Wickr SDK surfaces its not-found sentinel as
+// `*awstypes.ResourceNotFoundError`.
+func findNetworkSettingsByID(ctx context.Context, conn *wickr.Client, networkID string) (*wickr.GetNetworkSettingsOutput, error) {
+	input := wickr.GetNetworkSettingsInput{
+		NetworkId: aws.String(networkID),
+	}
+
+	out, err := conn.GetNetworkSettings(ctx, &input)
+	if errs.IsA[*awstypes.ResourceNotFoundError](err) {
+		return nil, &retry.NotFoundError{
+			LastError: err,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if out == nil {
+		return nil, tfresource.NewEmptyResultError()
+	}
+
+	return out, nil
+}
+
 // findSecurityGroupByID wraps GetSecurityGroup with the provider's standard
 // `*awstypes.ResourceNotFoundError` → `retry.NotFoundError` conversion
 // (design.md → "Error handling — smarterr / `internal/smerr`"). The SDK

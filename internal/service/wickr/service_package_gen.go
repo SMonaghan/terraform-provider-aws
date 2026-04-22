@@ -61,6 +61,16 @@ func (p *servicePackage) FrameworkResources(ctx context.Context) []*inttypes.Ser
 			},
 		},
 		{
+			Factory:  newNetworkSettingsResource,
+			TypeName: "aws_wickr_network_settings",
+			Name:     "Network Settings",
+			Region:   inttypes.ResourceRegionDefault(),
+			Identity: inttypes.RegionalSingleParameterIdentity("network_id"),
+			Import: inttypes.FrameworkImport{
+				WrappedImport: true,
+			},
+		},
+		{
 			Factory:  newSecurityGroupResource,
 			TypeName: "aws_wickr_security_group",
 			Name:     "Security Group",
