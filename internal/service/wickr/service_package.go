@@ -34,9 +34,10 @@ func (p *servicePackage) withExtraOptions(_ context.Context, _ map[string]any) [
 // `"migrationState":2` is NOT matched because `migrationState` is NOT in
 // the key list (it is documented as Integer and correctly returned as one).
 //
-// Fields currently covered: `networkId`. Add others here ONLY when backed by
-// an observed wire response from a live Wickr operation — do not guess.
-var numericStringRE = regexache.MustCompile(`"(networkId)":(\d+)`)
+// Fields currently covered: `networkId`, `botId`, `groupId`. Add others
+// here ONLY when backed by an observed wire response from a live Wickr
+// operation — do not guess.
+var numericStringRE = regexache.MustCompile(`"(networkId|botId|groupId)":(\d+)`)
 
 // networkIDInterceptor is a BeforeDeserialization interceptor that
 // rewrites bare numeric `networkId` values in the HTTP response body to

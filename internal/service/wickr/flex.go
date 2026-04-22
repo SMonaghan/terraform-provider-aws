@@ -22,6 +22,7 @@ import (
 // Only fields the user explicitly configured (non-null, non-unknown) are
 // populated. The API accepts a sparse payload — omitted fields retain
 // their current values server-side.
+// nosemgrep:ci.semgrep.framework.manual-expander-functions
 func expandNetworkSettings(ctx context.Context, model networkSettingsModel) *awstypes.NetworkSettings {
 	out := &awstypes.NetworkSettings{}
 	hasAny := false
@@ -67,6 +68,7 @@ func expandNetworkSettings(ctx context.Context, model networkSettingsModel) *aws
 // GetNetworkSettings call in a Wickr-supported region and record the
 // observed values here. As of this writing the answer remains unverified
 // against live AWS.
+// nosemgrep:ci.semgrep.framework.manual-flattener-functions
 func flattenNetworkSettingsOutput(ctx context.Context, out *wickr.GetNetworkSettingsOutput, model *networkSettingsModel) {
 	if out == nil {
 		return

@@ -8,8 +8,10 @@ var (
 	ResourceNetwork         = newNetworkResource
 	ResourceSecurityGroup   = newSecurityGroupResource
 	ResourceNetworkSettings = newNetworkSettingsResource
+	ResourceBot             = newBotResource
 
 	FindNetworkByID         = findNetworkByID
 	FindSecurityGroupByID   = findSecurityGroupByID
 	FindNetworkSettingsByID = findNetworkSettingsByID
+	FindBotByID             = findBotByID
 )

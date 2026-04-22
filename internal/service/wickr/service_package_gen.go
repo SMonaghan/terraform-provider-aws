@@ -57,6 +57,20 @@ func (p *servicePackage) FrameworkDataSources(ctx context.Context) []*inttypes.S
 func (p *servicePackage) FrameworkResources(ctx context.Context) []*inttypes.ServicePackageFrameworkResource {
 	return []*inttypes.ServicePackageFrameworkResource{
 		{
+			Factory:  newBotResource,
+			TypeName: "aws_wickr_bot",
+			Name:     "Bot",
+			Region:   inttypes.ResourceRegionDefault(),
+			Identity: inttypes.RegionalParameterizedIdentity([]inttypes.IdentityAttribute{
+				inttypes.StringIdentityAttribute("network_id", true),
+				inttypes.StringIdentityAttribute("bot_id", true),
+			}),
+			Import: inttypes.FrameworkImport{
+				WrappedImport: true,
+				ImportID:      botImportID{},
+			},
+		},
+		{
 			Factory:  newNetworkResource,
 			TypeName: "aws_wickr_network",
 			Name:     "Network",

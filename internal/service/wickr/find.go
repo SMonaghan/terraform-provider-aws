@@ -100,3 +100,39 @@ func findSecurityGroupByID(ctx context.Context, conn *wickr.Client, networkID, g
 
 	return out.SecurityGroup, nil
 }
+
+// findBotByID wraps GetBot with the provider's standard
+// `*awstypes.ResourceNotFoundError` → `retry.NotFoundError` conversion.
+// The Wickr API returns HTTP 404 with `api error UnknownError: Bot not found`
+// for deleted bots, which the SDK surfaces as a smithy error rather than
+// `*awstypes.ResourceNotFoundError`. We check for both.
+func findBotByID(ctx context.Context, conn *wickr.Client, networkID, botID string) (*wickr.GetBotOutput, error) {
+	input := wickr.GetBotInput{
+		BotId:     aws.String(botID),
+		NetworkId: aws.String(networkID),
+	}
+
+	out, err := conn.GetBot(ctx, &input)
+	if errs.IsA[*awstypes.ResourceNotFoundError](err) {
+		return nil, &retry.NotFoundError{
+			LastError: err,
+		}
+	}
+	// The Wickr API returns HTTP 404 with "Bot not found" as an UnknownError
+	// rather than ResourceNotFoundError for deleted bots (verified 2026-04-22,
+	// us-east-1). Check the error message string as a fallback.
+	if errs.Contains(err, "Bot not found") {
+		return nil, &retry.NotFoundError{
+			LastError: err,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if out == nil || out.BotId == nil {
+		return nil, tfresource.NewEmptyResultError()
+	}
+
+	return out, nil
+}
