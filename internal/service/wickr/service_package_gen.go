@@ -22,6 +22,12 @@ type servicePackage struct{}
 func (p *servicePackage) FrameworkDataSources(ctx context.Context) []*inttypes.ServicePackageFrameworkDataSource {
 	return []*inttypes.ServicePackageFrameworkDataSource{
 		{
+			Factory:  newBotDataSource,
+			TypeName: "aws_wickr_bot",
+			Name:     "Bot",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
+		{
 			Factory:  newNetworkDataSource,
 			TypeName: "aws_wickr_network",
 			Name:     "Network",
