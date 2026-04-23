@@ -5,13 +5,15 @@ package wickr
 
 // Exports for use in tests only.
 var (
-	ResourceNetwork         = newNetworkResource
-	ResourceSecurityGroup   = newSecurityGroupResource
-	ResourceNetworkSettings = newNetworkSettingsResource
-	ResourceBot             = newBotResource
+	ResourceNetwork          = newNetworkResource
+	ResourceSecurityGroup    = newSecurityGroupResource
+	ResourceNetworkSettings  = newNetworkSettingsResource
+	ResourceBot              = newBotResource
+	ResourceDataRetentionBot = newDataRetentionBotResource
 
-	FindNetworkByID         = findNetworkByID
-	FindSecurityGroupByID   = findSecurityGroupByID
-	FindNetworkSettingsByID = findNetworkSettingsByID
-	FindBotByID             = findBotByID
+	FindNetworkByID          = findNetworkByID
+	FindSecurityGroupByID    = findSecurityGroupByID
+	FindNetworkSettingsByID  = findNetworkSettingsByID
+	FindBotByID              = findBotByID
+	FindDataRetentionBotByID = findDataRetentionBotByID
 )

@@ -83,6 +83,16 @@ func (p *servicePackage) FrameworkResources(ctx context.Context) []*inttypes.Ser
 			},
 		},
 		{
+			Factory:  newDataRetentionBotResource,
+			TypeName: "aws_wickr_data_retention_bot",
+			Name:     "Data Retention Bot",
+			Region:   inttypes.ResourceRegionDefault(),
+			Identity: inttypes.RegionalSingleParameterIdentity("network_id"),
+			Import: inttypes.FrameworkImport{
+				WrappedImport: true,
+			},
+		},
+		{
 			Factory:  newNetworkResource,
 			TypeName: "aws_wickr_network",
 			Name:     "Network",

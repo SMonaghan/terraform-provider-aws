@@ -136,3 +136,42 @@ func findBotByID(ctx context.Context, conn *wickr.Client, networkID, botID strin
 
 	return out, nil
 }
+
+// findDataRetentionBotByID wraps GetDataRetentionBot with the provider's
+// standard `*awstypes.ResourceNotFoundError` → `retry.NotFoundError`
+// conversion. The data retention bot is a singleton per network; the only
+// identifier is the network ID.
+//
+// GetDataRetentionBot does not return ResourceNotFoundError when the bot
+// has not been created — it returns a response with BotExists=false. We
+// treat BotExists==false as not-found so the resource lifecycle works
+// correctly (Read removes from state, Delete treats as success).
+func findDataRetentionBotByID(ctx context.Context, conn *wickr.Client, networkID string) (*wickr.GetDataRetentionBotOutput, error) {
+	input := wickr.GetDataRetentionBotInput{
+		NetworkId: aws.String(networkID),
+	}
+
+	out, err := conn.GetDataRetentionBot(ctx, &input)
+	if errs.IsA[*awstypes.ResourceNotFoundError](err) {
+		return nil, &retry.NotFoundError{
+			LastError: err,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if out == nil {
+		return nil, tfresource.NewEmptyResultError()
+	}
+
+	// The API returns a valid response even when no bot exists — check
+	// the BotExists field to distinguish "bot provisioned" from "no bot".
+	if out.BotExists != nil && !*out.BotExists {
+		return nil, &retry.NotFoundError{
+			LastError: tfresource.NewEmptyResultError(),
+		}
+	}
+
+	return out, nil
+}
