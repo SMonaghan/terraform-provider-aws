@@ -175,3 +175,29 @@ func findDataRetentionBotByID(ctx context.Context, conn *wickr.Client, networkID
 
 	return out, nil
 }
+
+// findOIDCConfigByID wraps GetOidcInfo with the provider's standard
+// `*awstypes.ResourceNotFoundError` → `retry.NotFoundError` conversion.
+// Only `NetworkId` is passed — the token-exchange parameters are not
+// used (design decision: Read path reads saved config, not OAuth exchange).
+func findOIDCConfigByID(ctx context.Context, conn *wickr.Client, networkID string) (*wickr.GetOidcInfoOutput, error) {
+	input := wickr.GetOidcInfoInput{
+		NetworkId: aws.String(networkID),
+	}
+
+	out, err := conn.GetOidcInfo(ctx, &input)
+	if errs.IsA[*awstypes.ResourceNotFoundError](err) {
+		return nil, &retry.NotFoundError{
+			LastError: err,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if out == nil || out.OpenidConnectInfo == nil {
+		return nil, tfresource.NewEmptyResultError()
+	}
+
+	return out, nil
+}

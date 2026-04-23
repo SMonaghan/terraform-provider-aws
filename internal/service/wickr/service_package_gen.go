@@ -113,6 +113,16 @@ func (p *servicePackage) FrameworkResources(ctx context.Context) []*inttypes.Ser
 			},
 		},
 		{
+			Factory:  newOIDCConfigResource,
+			TypeName: "aws_wickr_oidc_config",
+			Name:     "OIDC Config",
+			Region:   inttypes.ResourceRegionDefault(),
+			Identity: inttypes.RegionalSingleParameterIdentity("network_id"),
+			Import: inttypes.FrameworkImport{
+				WrappedImport: true,
+			},
+		},
+		{
 			Factory:  newSecurityGroupResource,
 			TypeName: "aws_wickr_security_group",
 			Name:     "Security Group",

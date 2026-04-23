@@ -12,7 +12,7 @@ Manages the per-network settings for an AWS Wickr network. Network settings are 
 
 For more information, see the [AWS Wickr documentation](https://docs.aws.amazon.com/wickr/latest/adminguide/what-is-wickr.html).
 
-~> **NOTE:** `terraform destroy` for this resource is a **state-only no-op**. The underlying network settings remain in AWS with their current values. There is no `DeleteNetworkSettings` API operation. To stop managing network settings with Terraform, remove the resource from your configuration or use `terraform state rm`. To reset settings to their defaults, update the resource's arguments to the desired values before removing it.
+~> **NOTE:** Destroying this resource only removes it from Terraform state. The Wickr API does not support deleting network settings, so the underlying settings will remain in AWS with their current values.
 
 ## Example Usage
 

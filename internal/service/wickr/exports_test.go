@@ -10,10 +10,12 @@ var (
 	ResourceNetworkSettings  = newNetworkSettingsResource
 	ResourceBot              = newBotResource
 	ResourceDataRetentionBot = newDataRetentionBotResource
+	ResourceOIDCConfig       = newOIDCConfigResource
 
 	FindNetworkByID          = findNetworkByID
 	FindSecurityGroupByID    = findSecurityGroupByID
 	FindNetworkSettingsByID  = findNetworkSettingsByID
 	FindBotByID              = findBotByID
 	FindDataRetentionBotByID = findDataRetentionBotByID
+	FindOIDCConfigByID       = findOIDCConfigByID
 )
