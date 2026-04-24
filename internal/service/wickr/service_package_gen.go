@@ -52,6 +52,12 @@ func (p *servicePackage) FrameworkDataSources(ctx context.Context) []*inttypes.S
 			Region:   inttypes.ResourceRegionDefault(),
 		},
 		{
+			Factory:  newOIDCConfigDataSource,
+			TypeName: "aws_wickr_oidc_config",
+			Name:     "OIDC Config",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
+		{
 			Factory:  newSecurityGroupDataSource,
 			TypeName: "aws_wickr_security_group",
 			Name:     "Security Group",
