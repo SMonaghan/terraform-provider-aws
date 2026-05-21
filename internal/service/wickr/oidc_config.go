@@ -27,6 +27,7 @@ import (
 	fwflex "github.com/hashicorp/terraform-provider-aws/internal/framework/flex"
 	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	"github.com/hashicorp/terraform-provider-aws/internal/smerr"
+	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
 
@@ -50,6 +51,19 @@ func newOIDCConfigResource(_ context.Context) (resource.ResourceWithConfigure, e
 
 const (
 	ResNameOIDCConfig = "OIDC Config"
+
+	// oidcConnectionTestRetryTimeout is the maximum time to retry
+	// RegisterOidcConfig when the API returns a transient "OIDC URL
+	// connection test failed" error. The Wickr API performs a server-side
+	// connectivity check against the issuer URL during registration; this
+	// check can fail intermittently due to DNS resolution delays or
+	// network hiccups on the API server side, even when the issuer is
+	// publicly reachable. A short retry window resolves most transient
+	// failures without masking genuine configuration errors.
+	//
+	// Observed: 2026-04-28, us-east-1 — identical parameters succeed via
+	// CLI immediately after the provider call fails.
+	oidcConnectionTestRetryTimeout = 2 * time.Minute
 )
 
 type oidcConfigResource struct {
@@ -222,7 +236,23 @@ func (r *oidcConfigResource) Create(ctx context.Context, req resource.CreateRequ
 		input.UserId = plan.UserId.ValueStringPointer()
 	}
 
-	_, err := conn.RegisterOidcConfig(ctx, &input)
+	// Retry on transient "OIDC URL connection test failed" errors. The
+	// Wickr API performs a server-side connectivity check against the
+	// issuer URL during RegisterOidcConfig; this check can fail
+	// intermittently even when the issuer is publicly reachable.
+	err := tfresource.Retry(ctx, oidcConnectionTestRetryTimeout, func(ctx context.Context) *tfresource.RetryError {
+		_, err := conn.RegisterOidcConfig(ctx, &input)
+
+		if isOIDCConnectionTestError(err) {
+			return tfresource.RetryableError(err)
+		}
+
+		if err != nil {
+			return tfresource.NonRetryableError(err)
+		}
+
+		return nil
+	})
 	if err != nil {
 		smerr.AddError(ctx, &resp.Diagnostics, err, smerr.ID, networkID)
 		return
@@ -344,7 +374,21 @@ func (r *oidcConfigResource) Update(ctx context.Context, req resource.UpdateRequ
 		input.UserId = plan.UserId.ValueStringPointer()
 	}
 
-	_, err := conn.RegisterOidcConfig(ctx, &input)
+	// Retry on transient "OIDC URL connection test failed" errors (same
+	// rationale as Create — server-side connectivity check is flaky).
+	err := tfresource.Retry(ctx, oidcConnectionTestRetryTimeout, func(ctx context.Context) *tfresource.RetryError {
+		_, err := conn.RegisterOidcConfig(ctx, &input)
+
+		if isOIDCConnectionTestError(err) {
+			return tfresource.RetryableError(err)
+		}
+
+		if err != nil {
+			return tfresource.NonRetryableError(err)
+		}
+
+		return nil
+	})
 	if err != nil {
 		smerr.AddError(ctx, &resp.Diagnostics, err, smerr.ID, networkID)
 		return
@@ -377,6 +421,23 @@ func (r *oidcConfigResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 func (r *oidcConfigResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("network_id"), req, resp)
+}
+
+// isOIDCConnectionTestError returns true when err indicates the Wickr
+// API's server-side OIDC connectivity check failed. This error is
+// transient — the API server attempts to reach the issuer URL during
+// RegisterOidcConfig and can fail due to DNS or network hiccups on the
+// server side, even when the issuer is publicly reachable.
+//
+// Observed error shape (2026-04-28, us-east-1):
+//
+//	api error UnknownError: issuer: OIDC URL connection test failed;
+//	Check Issuer URL in the configuration and try again.
+func isOIDCConnectionTestError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "OIDC URL connection test failed")
 }
 
 // isOIDCConfigOrphanedChildError returns true when err indicates the
