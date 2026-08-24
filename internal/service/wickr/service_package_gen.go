@@ -20,11 +20,129 @@ import (
 type servicePackage struct{}
 
 func (p *servicePackage) FrameworkDataSources(ctx context.Context) []*inttypes.ServicePackageFrameworkDataSource {
-	return []*inttypes.ServicePackageFrameworkDataSource{}
+	return []*inttypes.ServicePackageFrameworkDataSource{
+		{
+			Factory:  newBotDataSource,
+			TypeName: "aws_wickr_bot",
+			Name:     "Bot",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
+		{
+			Factory:  newBotsDataSource,
+			TypeName: "aws_wickr_bots",
+			Name:     "Bots",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
+		{
+			Factory:  newNetworkDataSource,
+			TypeName: "aws_wickr_network",
+			Name:     "Network",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
+		{
+			Factory:  newNetworkSettingsDataSource,
+			TypeName: "aws_wickr_network_settings",
+			Name:     "Network Settings",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
+		{
+			Factory:  newNetworksDataSource,
+			TypeName: "aws_wickr_networks",
+			Name:     "Networks",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
+		{
+			Factory:  newOIDCConfigDataSource,
+			TypeName: "aws_wickr_oidc_config",
+			Name:     "OIDC Config",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
+		{
+			Factory:  newSecurityGroupDataSource,
+			TypeName: "aws_wickr_security_group",
+			Name:     "Security Group",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
+		{
+			Factory:  newSecurityGroupsDataSource,
+			TypeName: "aws_wickr_security_groups",
+			Name:     "Security Groups",
+			Region:   inttypes.ResourceRegionDefault(),
+		},
+	}
 }
 
 func (p *servicePackage) FrameworkResources(ctx context.Context) []*inttypes.ServicePackageFrameworkResource {
-	return []*inttypes.ServicePackageFrameworkResource{}
+	return []*inttypes.ServicePackageFrameworkResource{
+		{
+			Factory:  newBotResource,
+			TypeName: "aws_wickr_bot",
+			Name:     "Bot",
+			Region:   inttypes.ResourceRegionDefault(),
+			Identity: inttypes.RegionalParameterizedIdentity([]inttypes.IdentityAttribute{
+				inttypes.StringIdentityAttribute("network_id", true),
+				inttypes.StringIdentityAttribute("bot_id", true),
+			}),
+			Import: inttypes.FrameworkImport{
+				WrappedImport: true,
+				ImportID:      botImportID{},
+			},
+		},
+		{
+			Factory:  newDataRetentionBotResource,
+			TypeName: "aws_wickr_data_retention_bot",
+			Name:     "Data Retention Bot",
+			Region:   inttypes.ResourceRegionDefault(),
+			Identity: inttypes.RegionalSingleParameterIdentity(inttypes.StringIdentityAttribute("network_id", true)),
+			Import: inttypes.FrameworkImport{
+				WrappedImport: true,
+			},
+		},
+		{
+			Factory:  newNetworkResource,
+			TypeName: "aws_wickr_network",
+			Name:     "Network",
+			Region:   inttypes.ResourceRegionDefault(),
+			Identity: inttypes.RegionalARNIdentity(),
+			Import: inttypes.FrameworkImport{
+				WrappedImport: true,
+			},
+		},
+		{
+			Factory:  newNetworkSettingsResource,
+			TypeName: "aws_wickr_network_settings",
+			Name:     "Network Settings",
+			Region:   inttypes.ResourceRegionDefault(),
+			Identity: inttypes.RegionalSingleParameterIdentity(inttypes.StringIdentityAttribute("network_id", true)),
+			Import: inttypes.FrameworkImport{
+				WrappedImport: true,
+			},
+		},
+		{
+			Factory:  newOIDCConfigResource,
+			TypeName: "aws_wickr_oidc_config",
+			Name:     "OIDC Config",
+			Region:   inttypes.ResourceRegionDefault(),
+			Identity: inttypes.RegionalSingleParameterIdentity(inttypes.StringIdentityAttribute("network_id", true)),
+			Import: inttypes.FrameworkImport{
+				WrappedImport: true,
+			},
+		},
+		{
+			Factory:  newSecurityGroupResource,
+			TypeName: "aws_wickr_security_group",
+			Name:     "Security Group",
+			Region:   inttypes.ResourceRegionDefault(),
+			Identity: inttypes.RegionalParameterizedIdentity([]inttypes.IdentityAttribute{
+				inttypes.StringIdentityAttribute("network_id", true),
+				inttypes.StringIdentityAttribute("security_group_id", true),
+			}),
+			Import: inttypes.FrameworkImport{
+				WrappedImport: true,
+				ImportID:      securityGroupImportID{},
+			},
+		},
+	}
 }
 
 func (p *servicePackage) SDKDataSources(ctx context.Context) []*inttypes.ServicePackageSDKDataSource {
