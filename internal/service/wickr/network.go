@@ -61,11 +61,11 @@ const (
 // Implementation note for open question #3 (retry-error discrimination):
 // The AWS SDK for Go v2 default retryer (enabled by the provider-level
 // `conns.AWSClient` wrapper) already retries `*awstypes.RateLimitError` and
-// `*awstypes.InternalServerError`. No custom retryer is wired into
-// `service_package.go` for Wickr: the default behavior is sufficient for
-// the control-plane operations used by this resource. If that changes, add
-// a `withExtraOptions` hook alongside `NewClient` and cite the motivating
-// retryable error type here.
+// `*awstypes.InternalServerError`. No custom retryer is wired up for Wickr:
+// the default behavior is sufficient for the control-plane operations used
+// by this resource. If that changes, add a `withExtraOptions` method on
+// `servicePackage` (the generated client picks it up via an optional
+// interface) and cite the motivating retryable error type here.
 type networkResource struct {
 	framework.ResourceWithModel[networkResourceModel]
 	framework.WithTimeouts

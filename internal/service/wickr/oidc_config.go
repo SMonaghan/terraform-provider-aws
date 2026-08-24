@@ -5,6 +5,7 @@ package wickr
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -423,21 +424,53 @@ func (r *oidcConfigResource) ImportState(ctx context.Context, req resource.Impor
 	resource.ImportStatePassthroughID(ctx, path.Root("network_id"), req, resp)
 }
 
+// oidcConnectionTestFailure is the service-side message fragment indicating
+// the Wickr API could not reach the OIDC issuer URL.
+const oidcConnectionTestFailure = "OIDC URL connection test failed"
+
 // isOIDCConnectionTestError returns true when err indicates the Wickr
 // API's server-side OIDC connectivity check failed. This error is
 // transient — the API server attempts to reach the issuer URL during
 // RegisterOidcConfig and can fail due to DNS or network hiccups on the
 // server side, even when the issuer is publicly reachable.
 //
-// Observed error shape (2026-04-28, us-east-1):
+// Two wire shapes must be handled, because the service changed its
+// validation-error format:
 //
-//	api error UnknownError: issuer: OIDC URL connection test failed;
-//	Check Issuer URL in the configuration and try again.
+//  1. Pre-2026-08: the detail was carried in the error's `message` field, so
+//     it appeared in err.Error():
+//
+//     api error UnknownError: issuer: OIDC URL connection test failed;
+//     Check Issuer URL in the configuration and try again.
+//
+//  2. Since 2026-08 (Wickr-26195 / CR-294557949): `message` is the generic
+//     "Validation failed" and the detail moved into `reasons`:
+//
+//     {"message":"Validation failed",
+//     "reasons":[{"field":"issuer","reason":"OIDC URL connection test failed; ..."}]}
+//
+//     ValidationError.Error() renders only the error code and `message`, so
+//     the fragment is NOT in err.Error() and Reasons must be inspected
+//     directly. Checking only err.Error() silently disables this retry.
 func isOIDCConnectionTestError(err error) bool {
 	if err == nil {
 		return false
 	}
-	return strings.Contains(err.Error(), "OIDC URL connection test failed")
+
+	if strings.Contains(err.Error(), oidcConnectionTestFailure) {
+		return true
+	}
+
+	var validationErr *awstypes.ValidationError
+	if errors.As(err, &validationErr) {
+		for _, reason := range validationErr.Reasons {
+			if strings.Contains(aws.ToString(reason.Reason), oidcConnectionTestFailure) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // isOIDCConfigOrphanedChildError returns true when err indicates the
