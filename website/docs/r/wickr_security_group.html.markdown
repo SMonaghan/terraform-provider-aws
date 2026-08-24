@@ -131,7 +131,7 @@ Nested blocks:
 * `permitted_wickr_aws_networks` - (Optional) Allow-list of AWS Wickr networks that members may federate with. May be specified multiple times. See [permitted_wickr_aws_networks](#permitted_wickr_aws_networks).
 * `permitted_wickr_enterprise_networks` - (Optional) Allow-list of Wickr Enterprise networks that members may federate with. May be specified multiple times. See [permitted_wickr_enterprise_networks](#permitted_wickr_enterprise_networks).
 
-The `calling`, `password_requirements`, and `shredder` blocks are schema-declared but currently rejected at plan time; see [Known limitations](#known-limitations).
+The `calling` block exposes the subset of calling settings supported by the AWS SDK (`can_start_11_call`, `can_video_call`, `force_tcp_call`). The `password_requirements` and `shredder` blocks are schema-declared but currently rejected at plan time; see [Known limitations](#known-limitations).
 
 ### permitted_wickr_aws_networks
 
@@ -158,7 +158,7 @@ This resource exports the following attributes in addition to the arguments abov
 
 The AWS Wickr service enforces tier-specific admin controls. Setting a PREMIUM-only field on a `STANDARD` network causes `terraform apply` to fail with an error listing the offending fields and a pointer to [https://aws.amazon.com/wickr/pricing/](https://aws.amazon.com/wickr/pricing/) (the authoritative feature matrix).
 
-PREMIUM-only fields as of this writing:
+PREMIUM-only fields:
 
 * `always_reauthenticate`
 * `check_for_updates`
@@ -182,9 +182,10 @@ PREMIUM-only fields as of this writing:
 
 ## Known limitations
 
-* **`calling`, `password_requirements`, and `shredder` sub-blocks are currently blocked at plan time** (`listvalidator.SizeAtMost(0)`). The AWS API requires JSON fields that the upstream `github.com/aws/aws-sdk-go-v2/service/wickr` Go types do not include (`CALLING` uppercase key with 7 inner fields; `PasswordRequirements.regex`; `ShredderSettings.canProcessInBackground`), so the SDK cannot produce a request body the API accepts. This will be relaxed once the SDK catches up. Meanwhile, defaults for these settings are applied server-side at security-group creation and can be inspected (but not modified) via the corresponding computed attributes.
+* **`password_requirements` and `shredder` sub-blocks are currently blocked at plan time** (`listvalidator.SizeAtMost(0)`). The AWS API requires JSON fields that the upstream `github.com/aws/aws-sdk-go-v2/service/wickr` Go types do not include (`PasswordRequirements.regex`; `ShredderSettings.canProcessInBackground`), so the SDK cannot produce a request body the API accepts. This will be relaxed once the SDK catches up. Meanwhile, defaults for these settings are applied server-side at security-group creation and can be inspected (but not modified) via the corresponding computed attributes.
+* **`calling` exposes a subset of the API's calling settings.** The API's `calling` object includes fields (`canAddtoCall`, `canStartGroupCall`, `canStartRoomCall`, `canStartScreenShare`) that are absent from the Go SDK's `types.CallingSettings`; only the SDK-modeled fields are configurable.
 * **`federation_mode = 0` (Local)** is silently promoted to `1` (Restricted) by the AWS API on `STANDARD` networks. The schema rejects `0` at plan time via `int64validator.OneOf(1, 2)` to avoid a post-apply state drift.
-* **Default security group** — destroying an `aws_wickr_security_group` that was imported from the default SG will fail with the raw API error. Use a dedicated `aws_wickr_default_security_group` resource (forthcoming) instead.
+* **Default security group** — the default security group created implicitly by `CreateNetwork` cannot be deleted; destroying an `aws_wickr_security_group` that was imported from the default SG will fail with the raw API error.
 
 ## Timeouts
 

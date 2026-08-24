@@ -52,8 +52,6 @@ import (
 func newSecurityGroupResource(_ context.Context) (resource.ResourceWithConfigure, error) {
 	r := &securityGroupResource{}
 
-	// Default timeout matrix per design.md → "Retries and timeouts":
-	// Create 30m, Read 10m, Update 30m, Delete 30m.
 	r.SetDefaultCreateTimeout(30 * time.Minute)
 	r.SetDefaultReadTimeout(10 * time.Minute)
 	r.SetDefaultUpdateTimeout(30 * time.Minute)
@@ -357,7 +355,7 @@ func (r *securityGroupResource) Schema(ctx context.Context, req resource.SchemaR
 			// PlanModifiers surface, so post-apply consistency is enforced
 			// at the flatten layer (`flattenSecurityGroupSettings`) and at
 			// the ModifyPlan layer (`hasAnyNullLeaf`) rather than by the
-			// schema. See task 6.6 Failure class A.
+			// schema.
 			"settings": schema.ListNestedBlock{
 				CustomType: fwtypes.NewListNestedObjectTypeOf[securityGroupSettingsModel](ctx),
 				Validators: []validator.List{
@@ -494,11 +492,10 @@ func (r *securityGroupResource) Read(ctx context.Context, req resource.ReadReque
 	// Additionally, when the parent network has been deleted out-of-band
 	// (the common case when the `disappears` test hits `DeleteNetwork`
 	// which cascades to children), Wickr's `GetSecurityGroup` against the
-	// orphaned SG returns an HTTP 401 page whose HTML-shaped body the SDK
-	// decoder fails to parse, surfacing as a smithy error with
-	// "deserialization failed, failed to decode response body, invalid
-	// character 'i' looking for beginning of value". In either case,
-	// treat as "gone" so `terraform refresh` cleanly removes the resource.
+	// orphaned SG returns an HTTP 401 with a non-JSON body that the SDK
+	// decoder fails to parse, surfacing as a smithy "deserialization
+	// failed" error. In either case, treat as "gone" so
+	// `terraform refresh` cleanly removes the resource.
 	if isSecurityGroupOrphanedChildError(err) {
 		resp.Diagnostics.Append(fwdiag.NewResourceNotFoundWarningDiagnostic(err))
 		resp.State.RemoveResource(ctx)
@@ -605,9 +602,9 @@ func (r *securityGroupResource) Delete(ctx context.Context, req resource.DeleteR
 	//   1. *awstypes.ResourceNotFoundError — the SG has been deleted.
 	//   2. *awstypes.ForbiddenError — the parent network is in
 	//      delete-in-progress and will cascade-delete this SG.
-	//   3. Deserialization failure on an HTTP 401 HTML page — the parent
-	//      network has fully vanished and the orphaned-child path returns
-	//      an HTML error page that the SDK decoder cannot parse.
+	//   3. Deserialization failure on an HTTP 401 — the parent network
+	//      has fully vanished and the orphaned-child path returns a
+	//      non-JSON error body that the SDK decoder cannot parse.
 	if errs.IsA[*awstypes.ResourceNotFoundError](err) || isSecurityGroupOrphanedChildError(err) {
 		return
 	}
@@ -618,14 +615,11 @@ func (r *securityGroupResource) Delete(ctx context.Context, req resource.DeleteR
 }
 
 // isSecurityGroupOrphanedChildError returns true when `err` indicates that
-// the security group is gone (or its parent network is) for any of the
-// three reasons the Wickr service surfaces:
+// the security group is gone (or its parent network is):
 //   - *awstypes.ForbiddenError: parent network is in delete-in-progress.
-//   - Smithy HTTP 401 deserialization failure: parent network has fully
-//     vanished and Wickr returns an HTML error page that the SDK decoder
-//     cannot parse ("deserialization failed, failed to decode response
-//     body"). Observed in acceptance tests when `disappears` deletes the
-//     parent network mid-test.
+//   - HTTP 401 or a deserialization failure: parent network has fully
+//     vanished and Wickr returns a non-JSON error body that the SDK
+//     decoder cannot parse.
 func isSecurityGroupOrphanedChildError(err error) bool {
 	if err == nil {
 		return false
@@ -640,7 +634,7 @@ func isSecurityGroupOrphanedChildError(err error) bool {
 
 // compositeID returns the `(network_id, security_group_id)` identifier in
 // the `,`-separated form used throughout the Wickr provider for
-// parameterized identity (per docs/id-attributes.md and design.md).
+// parameterized identity (per docs/id-attributes.md).
 func compositeID(networkID, groupID string) string {
 	return fmt.Sprintf("%s,%s", networkID, groupID)
 }
@@ -649,7 +643,7 @@ func compositeID(networkID, groupID string) string {
 // match the schema attribute keys exactly via `tfsdk` tags. The `Settings`
 // nested object is materialized from `types.SecurityGroup.SecurityGroupSettings`
 // on Read, and split into Create-settable vs Update-settable halves on
-// Create/Update (see design.md).
+// Create/Update.
 type securityGroupResourceModel struct {
 	framework.WithRegionModel
 	ActiveDirectoryGUID types.String                                                `tfsdk:"active_directory_guid"`
@@ -747,7 +741,7 @@ func hasUpdateOnlySettings(ctx context.Context, v fwtypes.ListNestedObjectValueO
 	if diags.HasError() || m == nil {
 		return false
 	}
-	// The Create-settable fields (per design.md → Create-settable column):
+	// The Create-settable fields (mirroring SecurityGroupSettingsRequest):
 	//   EnableGuestFederation, EnableRestrictedGlobalFederation,
 	//   FederationMode, GlobalFederation, LockoutThreshold, PermittedNetworks,
 	//   PermittedWickrAwsNetworks, PermittedWickrEnterpriseNetworks.
@@ -843,8 +837,7 @@ func hasUpdateOnlySettings(ctx context.Context, v fwtypes.ListNestedObjectValueO
 // Wickr's `UpdateSecurityGroup` rejects every `*int32(0)` field with an
 // opaque `BadRequestError:”` — it treats zero as "no value", but the SDK
 // field is a non-pointer struct field set by
-// `Int32FromFrameworkInt64` on a null Int64 (which is 0). See task 6.6
-// Failure class D for full context.
+// `Int32FromFrameworkInt64` on a null Int64 (which is 0).
 func nullSafeInt32(ctx context.Context, v types.Int64) *int32 {
 	if v.IsNull() || v.IsUnknown() {
 		return nil
@@ -877,15 +870,14 @@ func nullSafeBool(ctx context.Context, v types.Bool) *bool {
 // PermittedWickrAwsNetworks, PermittedWickrEnterpriseNetworks).
 //
 // AutoFlex is not usable here because `SecurityGroupSettingsRequest` is a
-// strict Create-time subset of `SecurityGroupSettings` (see design.md →
-// "`aws_wickr_security_group` resource → CRUD pseudocode"): the Terraform
+// strict Create-time subset of `SecurityGroupSettings`: the Terraform
 // model is the union, and AutoFlex cannot split one model into two SDK
 // shapes. The hand-written split is deliberate.
 //
 // Every scalar leaf is built via `nullSafeInt32` / `nullSafeBool` so we
 // never emit `*int32(0)` / `*bool(false)` for fields the user left
 // unconfigured — AWS Wickr rejects explicit zero/false on some settings
-// fields (task 6.6 Failure class D).
+// fields.
 //
 // nosemgrep:ci.semgrep.framework.manual-expander-functions
 func expandSettingsRequest(ctx context.Context, v fwtypes.ListNestedObjectValueOf[securityGroupSettingsModel]) (*awstypes.SecurityGroupSettingsRequest, diag.Diagnostics) {
@@ -1117,7 +1109,6 @@ func expandSettingsDiff(ctx context.Context, plan, state fwtypes.ListNestedObjec
 // to flatten (the parent network is inferred by URL, not echoed), and the
 // nested `SecurityGroupSettings` contains a large union of Create-vs-Update
 // shapes that the Terraform model flattens as a single structured block.
-// See design.md → "`aws_wickr_security_group` resource".
 //
 // nosemgrep:ci.semgrep.framework.manual-flattener-functions
 func flattenSecurityGroup(ctx context.Context, sg *awstypes.SecurityGroup, networkID string, m *securityGroupResourceModel) diag.Diagnostics {
@@ -1379,8 +1370,7 @@ func optionalComputedListOfString() schema.ListAttribute {
 //
 // Every leaf is Optional+Computed with `UseStateForUnknown` so that
 // server-populated defaults at Create time flow into state without
-// tripping Terraform's post-apply consistency check (see task 6.6
-// Failure class A).
+// tripping Terraform's post-apply consistency check.
 func securityGroupSettingsScalarAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"always_reauthenticate":               optionalComputedBool(),
@@ -1438,14 +1428,11 @@ func securityGroupSettingsNestedBlocks(ctx context.Context) map[string]schema.Bl
 			// provider enriches that error with the offending field list
 			// via `enrichPlanTierError`.
 			//
-			// SDK gap note: the AWS API's JSON response for the `CALLING`
-			// (uppercase) key includes fields
+			// SDK gap note: the AWS API's `calling` object includes fields
 			// (`canAddtoCall`, `canStartGroupCall`, `canStartRoomCall`,
 			// `canStartScreenShare`) that are absent from the Go SDK's
-			// `types.CallingSettings`. See
-			// `.kiro/specs/aws-wickr-service/aws-sdk-go-v2-issue.md`. The
-			// three leaves we do expose are the ones the SDK can send
-			// and receive safely.
+			// `types.CallingSettings`. The three leaves exposed here are
+			// the ones the SDK can send and receive safely.
 			NestedObject: schema.NestedBlockObject{
 				Attributes: map[string]schema.Attribute{
 					"can_start_11_call": optionalComputedBool(),
@@ -1469,9 +1456,6 @@ func securityGroupSettingsNestedBlocks(ctx context.Context) map[string]schema.Bl
 				// STANDARD and PREMIUM per
 				// https://aws.amazon.com/wickr/pricing/ → Admin
 				// controls → Security and compliance.
-				//
-				// See `.kiro/specs/aws-wickr-service/aws-sdk-go-v2-issue.md`
-				// for the full SDK-vs-API gap list.
 				listvalidator.SizeAtMost(0),
 			},
 			NestedObject: schema.NestedBlockObject{
@@ -1498,12 +1482,9 @@ func securityGroupSettingsNestedBlocks(ctx context.Context) map[string]schema.Bl
 				// independent of plan tier — `shredder` is available
 				// on both STANDARD and PREMIUM per
 				// https://aws.amazon.com/wickr/pricing/ → Admin
-				// controls → Messaging.
-				//
-				// See `.kiro/specs/aws-wickr-service/aws-sdk-go-v2-issue.md`
-				// for the full SDK-vs-API gap list. Surfacing this as
-				// a plan-time error is better than letting Apply fail
-				// with a generic "invalid options or data" from AWS.
+				// controls → Messaging. Surfacing this as a plan-time
+				// error is better than letting Apply fail with a
+				// generic "invalid options or data" from AWS.
 				listvalidator.SizeAtMost(0),
 			},
 			NestedObject: schema.NestedBlockObject{

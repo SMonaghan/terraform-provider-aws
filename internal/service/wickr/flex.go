@@ -56,18 +56,10 @@ func expandNetworkSettings(ctx context.Context, model networkSettingsModel) *aws
 
 // flattenNetworkSettingsOutput materializes the flat `[]types.Setting` list
 // returned by `GetNetworkSettingsOutput` into the structured Terraform
-// resource model.
-//
-// Implementation note (open question #1 — Setting.OptionName string keys):
-// The exact OptionName strings are inferred from the CamelCase field names
-// on `types.NetworkSettings` (the Update-side structured type). The switch
-// below handles the known keys; unrecognized keys are silently ignored so
-// that new settings added by AWS do not break existing configurations.
-//
-// TODO: Verify the exact OptionName strings against a live
-// GetNetworkSettings call in a Wickr-supported region and record the
-// observed values here. As of this writing the answer remains unverified
-// against live AWS.
+// resource model. OptionName keys are matched case-insensitively (observed
+// live values are camelCase, e.g. `enableClientMetrics`,
+// `readReceiptConfig.status`); unrecognized keys are ignored so that new
+// settings added by AWS do not break existing configurations.
 // nosemgrep:ci.semgrep.framework.manual-flattener-functions
 func flattenNetworkSettingsOutput(ctx context.Context, out *wickr.GetNetworkSettingsOutput, model *networkSettingsModel) {
 	if out == nil {

@@ -51,8 +51,8 @@ func (d *networksDataSource) Read(ctx context.Context, req datasource.ReadReques
 	conn := d.Meta().WickrClient(ctx)
 
 	// Paginate via NewListNetworksPaginator and accumulate page.Networks
-	// across all pages. An empty result is NOT an error (Requirement 5.4):
-	// it simply produces an empty `networks` list.
+	// across all pages. An empty result is not an error: it simply
+	// produces an empty `networks` list.
 	var networks []awstypes.Network
 	paginator := wickr.NewListNetworksPaginator(conn, &wickr.ListNetworksInput{})
 	for paginator.HasMorePages() {

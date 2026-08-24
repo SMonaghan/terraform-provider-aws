@@ -87,8 +87,8 @@ func (d *botsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	// Paginate via NewListBotsPaginator and accumulate page.Bots across
-	// all pages. An empty result is NOT an error (Requirement 13.5): it
-	// simply produces an empty `bots` list.
+	// all pages. An empty result is not an error: it simply produces an
+	// empty `bots` list.
 	var bots []awstypes.Bot
 	paginator := wickr.NewListBotsPaginator(conn, &input)
 	for paginator.HasMorePages() {

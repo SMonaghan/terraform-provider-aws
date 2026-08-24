@@ -146,8 +146,8 @@ func TestAccWickrSecurityGroup_name(t *testing.T) {
 // `SecurityGroupSettingsRequest` doc; the SDK's third documented value 0
 // (Local) is not requestable — when submitted the service silently
 // substitutes its default (1, Restricted) which trips a "Provider produced
-// inconsistent result after apply" diagnostic. See task 6.6 Failure
-// class C, and the accompanying int64validator.OneOf(1, 2) on the schema.
+// inconsistent result after apply" diagnostic. See the accompanying
+// int64validator.OneOf(1, 2) on the schema.
 func TestAccWickrSecurityGroup_federationMode(t *testing.T) {
 	ctx := acctest.Context(t)
 	if testing.Short() {
@@ -362,11 +362,10 @@ func TestAccWickrSecurityGroup_premiumPlanTierError(t *testing.T) {
 // `aws-sdk-go-v2/service/wickr` type coverage for
 // `types.ShredderSettings` matches the AWS API (the service requires
 // `canProcessInBackground` and rejects Update requests that omit it;
-// the Go SDK has no such field). See
-// `.kiro/specs/aws-wickr-service/aws-sdk-go-v2-issue.md`. Once the
-// SDK catches up, add a `TestAccWickrSecurityGroup_shredderIntensity`
-// that exercises this Create-then-UpdateSecurityGroup path with
-// intensity values from {0, 20, 60, 100}.
+// the Go SDK has no such field). Once the SDK catches up, add a
+// `TestAccWickrSecurityGroup_shredderIntensity` that exercises this
+// Create-then-UpdateSecurityGroup path with intensity values from
+// {0, 20, 60, 100}.
 
 // Note: the default security group created implicitly by
 // `CreateNetwork` is not manageable through `aws_wickr_security_group`.
@@ -404,8 +403,7 @@ func testAccCheckSecurityGroupDestroy(ctx context.Context, t *testing.T) resourc
 			//     this happens when the parent network has fully vanished
 			//     and the Wickr API returns a non-JSON 401 page that the
 			//     SDK decoder cannot parse. Treat as "gone".
-			// Any other error still fails the test. See task 6.6 Failure
-			// class E.
+			// Any other error still fails the test.
 			_, err := tfwickr.FindSecurityGroupByID(ctx, conn, networkID, groupID)
 			if retry.NotFound(err) {
 				continue

@@ -15,16 +15,10 @@ import (
 )
 
 // findNetworkByID wraps GetNetwork with the provider's standard
-// `*awstypes.ResourceNotFoundError` → `retry.NotFoundError` conversion
-// (design.md → "Error handling — smarterr / `internal/smerr`"). The Wickr
-// SDK surfaces its not-found sentinel as `*awstypes.ResourceNotFoundError`
-// (note: "Error" suffix, not "Exception") — Requirement 2 item 20 verified.
-//
-// Implementation note for open question #4 (ResourceNotFoundError ErrorCode()):
-// The type assertion via `errs.IsA[*awstypes.ResourceNotFoundError]` is the
-// canonical signal; no secondary error-code-string check is needed. If a
-// future caller wires `errs.IsAErrorMessageContains` for additional error
-// classification, record the observed error-code string next to that check.
+// `*awstypes.ResourceNotFoundError` → `retry.NotFoundError` conversion.
+// The Wickr SDK surfaces its not-found sentinel as
+// `*awstypes.ResourceNotFoundError` (note the "Error" suffix, not
+// "Exception").
 func findNetworkByID(ctx context.Context, conn *wickr.Client, id string) (*wickr.GetNetworkOutput, error) {
 	input := wickr.GetNetworkInput{
 		NetworkId: aws.String(id),
@@ -74,10 +68,7 @@ func findNetworkSettingsByID(ctx context.Context, conn *wickr.Client, networkID 
 }
 
 // findSecurityGroupByID wraps GetSecurityGroup with the provider's standard
-// `*awstypes.ResourceNotFoundError` → `retry.NotFoundError` conversion
-// (design.md → "Error handling — smarterr / `internal/smerr`"). The SDK
-// surfaces the not-found signal as `*awstypes.ResourceNotFoundError` (note
-// the "Error" suffix, not "Exception").
+// `*awstypes.ResourceNotFoundError` → `retry.NotFoundError` conversion.
 func findSecurityGroupByID(ctx context.Context, conn *wickr.Client, networkID, groupID string) (*awstypes.SecurityGroup, error) {
 	input := wickr.GetSecurityGroupInput{
 		GroupId:   aws.String(groupID),

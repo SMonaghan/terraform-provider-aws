@@ -14,10 +14,9 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 )
 
-// supportedRegions returns the Wickr_Supported_Regions set from the
-// Glossary in the spec (see .kiro/specs/aws-wickr-service/requirements.md).
-// Wickr is available in 11 commercial regions plus GovCloud us-gov-west-1;
-// the provider's default test region (us-west-2) is NOT in this set.
+// supportedRegions returns the regions in which the Wickr admin API is
+// available: 11 commercial regions plus GovCloud us-gov-west-1. The
+// provider's default test region (us-west-2) is NOT in this set.
 func supportedRegions() []string {
 	return []string{
 		endpoints.UsEast1RegionID,
@@ -53,14 +52,9 @@ func testAccPreCheckAvailable(ctx context.Context, t *testing.T) {
 	input := wickr.ListNetworksInput{}
 	_, err := conn.ListNetworks(ctx, &input)
 
-	// Implementation note for open question #5 (UnauthorizedError vs
-	// ForbiddenError on a no-perms principal):
 	// The SDK defines both `*awstypes.UnauthorizedError` and
-	// `*awstypes.ForbiddenError`; without live API confirmation we match
-	// both so the PreCheck doesn't false-fail in either regime. Whoever
-	// runs the first live testacc pass should record the observed type
-	// here and drop the unused branch. As of this writing the answer
-	// remains unverified against live AWS.
+	// `*awstypes.ForbiddenError` for permission failures; match both so
+	// the PreCheck skips cleanly in either case.
 	if errs.IsA[*awstypes.UnauthorizedError](err) ||
 		errs.IsA[*awstypes.ForbiddenError](err) ||
 		acctest.PreCheckSkipError(err) {

@@ -82,12 +82,10 @@ func (r *oidcConfigResource) Schema(ctx context.Context, req resource.SchemaRequ
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			// TODO: company_id region-prefix validation deferred (open question #9).
-			// The company_id value requires a Wickr-specific region prefix
-			// (e.g., UE1- for us-east-1, AS1- for ap-southeast-1). Verifying
-			// the full prefix mapping requires live API calls in multiple
-			// regions which cannot be done here. Add a regexache-compiled
-			// stringvalidator.RegexMatches once the mapping is fully verified.
+			// company_id requires a Wickr-specific region prefix (e.g.
+			// UE1- for us-east-1, AS1- for ap-southeast-1). The value is
+			// not validated here because the full prefix mapping is not
+			// documented; the API rejects invalid values.
 			"company_id": schema.StringAttribute{
 				Required: true,
 			},
@@ -434,24 +432,11 @@ const oidcConnectionTestFailure = "OIDC URL connection test failed"
 // RegisterOidcConfig and can fail due to DNS or network hiccups on the
 // server side, even when the issuer is publicly reachable.
 //
-// Two wire shapes must be handled, because the service changed its
-// validation-error format:
-//
-//  1. Pre-2026-08: the detail was carried in the error's `message` field, so
-//     it appeared in err.Error():
-//
-//     api error UnknownError: issuer: OIDC URL connection test failed;
-//     Check Issuer URL in the configuration and try again.
-//
-//  2. Since 2026-08 (Wickr-26195 / CR-294557949): `message` is the generic
-//     "Validation failed" and the detail moved into `reasons`:
-//
-//     {"message":"Validation failed",
-//     "reasons":[{"field":"issuer","reason":"OIDC URL connection test failed; ..."}]}
-//
-//     ValidationError.Error() renders only the error code and `message`, so
-//     the fragment is NOT in err.Error() and Reasons must be inspected
-//     directly. Checking only err.Error() silently disables this retry.
+// The failure detail may appear in the error message itself or only in
+// `ValidationError.Reasons` (the API returns validation failures as
+// `{"message":"Validation failed","reasons":[{"field":...,"reason":...}]}`
+// and ValidationError.Error() renders only the message), so both are
+// checked.
 func isOIDCConnectionTestError(err error) bool {
 	if err == nil {
 		return false

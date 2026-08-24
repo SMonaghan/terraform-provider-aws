@@ -99,9 +99,9 @@ func (d *botDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 }
 
 // botDataSourceModel mirrors the resource's Computed attributes minus
-// `challenge` (GetBot does not return the password; Requirement 12.4),
-// `suspend` (user-facing input toggle, not relevant for a read-only data
-// source), and `timeouts` (data sources have no timeouts block).
+// `challenge` (GetBot does not return the password), `suspend`
+// (user-facing input toggle, not relevant for a read-only data source),
+// and `timeouts` (data sources have no timeouts block).
 type botDataSourceModel struct {
 	framework.WithRegionModel
 	BotID        types.String `tfsdk:"bot_id"`

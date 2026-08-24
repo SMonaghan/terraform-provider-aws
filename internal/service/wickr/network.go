@@ -58,14 +58,6 @@ const (
 	ResNameNetwork = "Network"
 )
 
-// Implementation note for open question #3 (retry-error discrimination):
-// The AWS SDK for Go v2 default retryer (enabled by the provider-level
-// `conns.AWSClient` wrapper) already retries `*awstypes.RateLimitError` and
-// `*awstypes.InternalServerError`. No custom retryer is wired up for Wickr:
-// the default behavior is sufficient for the control-plane operations used
-// by this resource. If that changes, add a `withExtraOptions` method on
-// `servicePackage` (the generated client picks it up via an optional
-// interface) and cite the motivating retryable error type here.
 type networkResource struct {
 	framework.ResourceWithModel[networkResourceModel]
 	framework.WithTimeouts
@@ -97,26 +89,14 @@ func (r *networkResource) Schema(ctx context.Context, req resource.SchemaRequest
 					boolplanmodifier.UseStateForUnknown(),
 				},
 			},
-			// Open question (deferred): `encryption_key_arn` is documented on
-			// the `CreateNetwork`, `UpdateNetwork`, and `GetNetwork` API
-			// contracts (see
-			// https://docs.aws.amazon.com/wickr/latest/APIReference/API_Network.html)
-			// and modeled in `aws-sdk-go-v2/service/wickr` as
-			// `*string`, but the live service (verified 2026-04-19, us-east-1,
-			// both STANDARD and PREMIUM tiers) silently accepts the value on
-			// Create/Update and never returns it on any subsequent Get/List
-			// call. The field is also absent from the AWS Wickr admin console's
-			// network-creation UI, suggesting the feature is either pre-announced
-			// or not yet rolled out to public customers. The attribute is
-			// intentionally omitted from this schema until the service implements
-			// end-to-end persistence. Reintroduce it as a backward-compatible
-			// minor-version addition when live Get returns the value.
-			// Open question #2 (FreeTrialExpiration string format):
-			// The SDK doc describes this as "The expiration date and time" but
-			// does not specify a format. Surface it as a plain Framework string
-			// until a live API call confirms RFC3339, at which point this can be
-			// switched to `timetypes.RFC3339Type`. Whoever verifies should
-			// update this comment with the observed format and the date tested.
+			// encryption_key_arn is modeled on CreateNetwork, UpdateNetwork,
+			// and GetNetwork, but the live service silently accepts the value
+			// on Create/Update and never returns it on any subsequent
+			// Get/List call. The attribute is intentionally omitted from
+			// this schema until the service persists it end to end.
+			//
+			// free_trial_expiration is surfaced as a plain string because
+			// the API does not document its timestamp format.
 			"free_trial_expiration": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
@@ -364,11 +344,6 @@ func (r *networkResource) Delete(ctx context.Context, req resource.DeleteRequest
 	// - ListNetworks filters the network out as soon as deletion starts, so
 	//   customers see it disappear via ListNetworks even before GetNetwork
 	//   starts returning a terminal error.
-	//
-	// Open question #8 (per-account network quota):
-	// Per-account quota, if any, has not been observed in this account. If
-	// acceptance-test parallelism becomes a problem, add a PreCheck or a
-	// serialized TestMain.
 	deleteTimeout := r.DeleteTimeout(ctx, state.Timeouts)
 	_, err = tfresource.RetryUntilEqual(ctx, deleteTimeout, true, func(ctx context.Context) (bool, error) {
 		_, findErr := findNetworkByID(ctx, conn, networkID)

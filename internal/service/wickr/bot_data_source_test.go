@@ -43,8 +43,8 @@ func TestAccWickrBotDataSource_basic(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceName, "suspended", resourceName, "suspended"),
 					resource.TestCheckResourceAttrSet(dataSourceName, "bot_id"),
 					// Verify that the data source does NOT expose a `challenge`
-					// attribute (Requirement 12.4). GetBot does not return the
-					// bot password; only `has_challenge` is echoed.
+					// attribute. GetBot does not return the bot password;
+					// only `has_challenge` is echoed.
 					resource.TestCheckNoResourceAttr(dataSourceName, "challenge"),
 				),
 			},

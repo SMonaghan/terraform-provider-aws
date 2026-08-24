@@ -57,9 +57,8 @@ func (d *securityGroupsDataSource) Read(ctx context.Context, req datasource.Read
 	networkID := data.NetworkID.ValueString()
 
 	// Paginate via NewListSecurityGroupsPaginator and accumulate
-	// page.SecurityGroups across all pages. An empty result is NOT an
-	// error (Requirement 8.5): it simply produces an empty
-	// `security_groups` list.
+	// page.SecurityGroups across all pages. An empty result is not an
+	// error: it simply produces an empty `security_groups` list.
 	var securityGroups []awstypes.SecurityGroup
 	paginator := wickr.NewListSecurityGroupsPaginator(conn, &wickr.ListSecurityGroupsInput{
 		NetworkId: &networkID,

@@ -76,11 +76,9 @@ func (r *botResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				},
 			},
 			// challenge is the bot password, user-supplied on both Create and
-			// Update. The SDK allows rotating via UpdateBot. Declared as
-			// Required + Sensitive, symmetric with aws_db_instance.password
-			// (Requirement 2.3 Group A item 9). NOT WriteOnly, NOT ephemeral.
-			// GetBotOutput does not return the password (only HasChallenge),
-			// so state-vs-API drift on this field is not possible.
+			// Update. GetBotOutput does not return the password (only
+			// HasChallenge), so state-vs-API drift on this field is not
+			// possible.
 			"challenge": schema.StringAttribute{
 				Required:  true,
 				Sensitive: true,
@@ -129,14 +127,7 @@ func (r *botResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 			"uname": schema.StringAttribute{
 				Computed: true,
 			},
-			// Implementation-time verification for open question #7:
-			// The Wickr API enforces that bot usernames must end in "bot"
-			// (per types.User SDK doc). Additional validation rules beyond
-			// the suffix constraint should be probed during acceptance
-			// testing and encoded here. The regex below enforces the
-			// documented suffix rule; add further character-class or
-			// length constraints if the live API rejects inputs that pass
-			// this regex.
+			// The Wickr API requires bot usernames to end in "bot".
 			names.AttrUsername: schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{

@@ -16,10 +16,9 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep/framework"
 )
 
-// Per design.md → "Sweepers", the Wickr package ships exactly one sweeper:
-// `aws_wickr_network`. Child-object sweepers are unnecessary because
-// DeleteNetwork is documented as cascading through all child resources
-// (users, bots, security groups, settings).
+// The Wickr package ships exactly one sweeper, `aws_wickr_network`.
+// Child-object sweepers are unnecessary because DeleteNetwork cascades
+// through all child resources (users, bots, security groups, settings).
 func RegisterSweepers() {
 	awsv2.Register("aws_wickr_network", sweepNetworks)
 }

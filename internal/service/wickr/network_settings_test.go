@@ -150,7 +150,7 @@ func TestAccWickrNetworkSettings_readReceiptConfig(t *testing.T) {
 	})
 }
 
-// TestAccWickrNetworkSettings_deleteIsNoOp exercises the Requirement 2.10
+// TestAccWickrNetworkSettings_deleteIsNoOp exercises the
 // "no-op remove-from-state" semantics. It creates a network settings
 // resource with non-default values, removes the resource from config, and
 // then asserts that a direct `GetNetworkSettings` against the same network

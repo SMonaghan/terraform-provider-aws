@@ -242,7 +242,7 @@ func TestAccWickrBot_suspend(t *testing.T) {
 // TestAccWickrBot_sensitiveChallengeNotPrinted exercises the Sensitive flag
 // on the challenge attribute. It creates a bot with a known password and
 // asserts that the literal password string does not appear in the Terraform
-// plan output (Requirement 19.9).
+// plan output.
 func TestAccWickrBot_sensitiveChallengeNotPrinted(t *testing.T) {
 	ctx := acctest.Context(t)
 	if testing.Short() {
