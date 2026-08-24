@@ -70,8 +70,8 @@ resource "aws_wickr_security_group" "admins" {
 
   settings {
     # These require a PREMIUM network:
-    always_reauthenticate = true
-    is_ato_enabled        = true # Account-takeover protection
+    always_reauthenticate  = true
+    is_ato_enabled         = true # Account-takeover protection
     max_auto_download_size = 10485760
     max_ttl                = 2592000 # 30 days
   }
