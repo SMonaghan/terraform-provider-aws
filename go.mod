@@ -11,7 +11,7 @@ require (
 	github.com/YakDriver/go-version v0.2.0
 	github.com/YakDriver/regexache v0.25.0
 	github.com/YakDriver/smarterr v0.8.0
-	github.com/aws/aws-sdk-go-v2 v1.43.6
+	github.com/aws/aws-sdk-go-v2 v1.43.7
 	github.com/aws/aws-sdk-go-v2/config v1.32.37
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.36
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.37
@@ -284,6 +284,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/wafregional v1.33.6
 	github.com/aws/aws-sdk-go-v2/service/wafv2 v1.77.5
 	github.com/aws/aws-sdk-go-v2/service/wellarchitected v1.43.1
+	github.com/aws/aws-sdk-go-v2/service/wickr v1.5.7
 	github.com/aws/aws-sdk-go-v2/service/workmail v1.40.1
 	github.com/aws/aws-sdk-go-v2/service/workspaces v1.73.3
 	github.com/aws/aws-sdk-go-v2/service/workspacesweb v1.42.6
@@ -345,8 +346,8 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.18 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.37 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.37 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.38 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.38 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.38 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.30 // indirect
